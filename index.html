@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FROGGY MATH JUMP - Petualangan Katak Pintar</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter & Fredoka -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pond: {
+                            light: '#38bdf8',
+                            DEFAULT: '#0284c7',
+                            dark: '#0369a1',
+                        },
+                        frog: {
+                            light: '#86efac',
+                            DEFAULT: '#22c55e',
+                            dark: '#15803d',
+                        },
+                        lily: '#16a34a',
+                    },
+                    fontFamily: {
+                        sans: ['Fredoka', 'Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'bounce-subtle': 'bounceSubtle 1.5s ease-in-out infinite',
+                        'sway': 'sway 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        bounceSubtle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        },
+                        sway: {
+                            '0%, 100%': { transform: 'rotate(-2deg)' },
+                            '50%': { transform: 'rotate(2deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+            background-color: #0284c7;
+        }
+
+        /* Water Ripples Container */
+        .water-container {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 60%, #0369a1 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grass-sway {
+            transform-origin: bottom center;
+            animation: grassSway 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes grassSway {
+            0% { transform: rotate(-3deg); }
+            100% { transform: rotate(3deg); }
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            opacity: 0.15;
+            background: repeat-x linear-gradient(to right, transparent, #ffffff, transparent);
+            animation: waveAnim 12s linear infinite;
+        }
+
+        @keyframes waveAnim {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Rain Canvas Layer */
+        #rain-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 12px 32px 0 rgba(0, 45, 95, 0.25);
+        }
+
+        /* Frog Animation Classes */
+        .frog-jumping {
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .frog-splash {
+            animation: splashAnim 0.7s ease-out forwards;
+        }
+
+        @keyframes splashAnim {
+            0% { transform: scale(1) translateY(0); opacity: 1; }
+            50% { transform: scale(1.3) translateY(20px); opacity: 0.8; }
+            100% { transform: scale(0.2) translateY(50px); opacity: 0; }
+        }
+
+        /* Horizontal Leaf Answer Button Styling */
+        .leaf-btn {
+            position: relative;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+        .leaf-btn:hover:not(:disabled) {
+            transform: scale(1.08) translateY(-4px);
+            filter: brightness(1.12);
+        }
+        .leaf-btn:active:not(:disabled) {
+            transform: scale(0.95) translateY(2px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="h-full w-full text-slate-800 flex flex-col justify-between">
+
+    <!-- TOP GLOBAL BAR -->
+    <header class="w-full z-40 bg-slate-900/40 backdrop-blur-md border-b border-white/20 text-white px-4 py-2 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🐸</span>
+            <div>
+                <h1 class="text-lg md:text-xl font-bold leading-none tracking-wide text-amber-300 drop-shadow">FROGGY MATH JUMP</h1>
+                <p class="text-[10px] md:text-xs text-emerald-200 font-sans">Karya: Andi Rifaih, S.Pd. (Kelas 3 SD)</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Sound Button -->
+            <button id="btn-toggle-sound" class="p-2.5 bg-white/20 hover:bg-white/30 rounded-xl transition shadow flex items-center justify-center w-10 h-10" title="Suara / Musik">
+                <i id="icon-sound" class="fas fa-volume-up text-amber-300 text-lg"></i>
+            </button>
+            <!-- Fullscreen Button -->
+            <button id="btn-toggle-fullscreen" class="p-2.5 bg-white/20 hover:bg-white/30 rounded-xl transition shadow flex items-center justify-center w-10 h-10" title="Layar Penuh">
+                <i id="icon-fullscreen" class="fas fa-expand text-amber-300 text-lg"></i>
+            </button>
+            <!-- Back to Menu -->
+            <button id="btn-home" class="hidden px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-xl text-xs md:text-sm transition shadow flex items-center gap-1.5">
+                <i class="fas fa-home"></i>
+                <span class="hidden sm:inline">Menu Utama</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWPORT -->
+    <main id="app-viewport" class="relative flex-1 w-full h-full water-container flex items-center justify-center p-2 sm:p-4">
+        
+        <!-- Rain Drops Canvas Animation -->
+        <canvas id="rain-canvas"></canvas>
+
+        <!-- Animated Background Clouds -->
+        <div class="wave"></div>
+        <div class="absolute inset-0 pointer-events-none opacity-30">
+            <div class="absolute top-8 left-10 animate-float text-4xl">☁️</div>
+            <div class="absolute top-16 right-16 animate-float text-5xl" style="animation-delay: 1.5s;">☁️</div>
+            <div class="absolute bottom-12 left-1/4 animate-float text-3xl" style="animation-delay: 0.8s;">🪷</div>
+            <div class="absolute top-1/3 right-1/3 animate-float text-3xl" style="animation-delay: 2.2s;">🪷</div>
+        </div>
+
+        <!-- ==================== 1. LANDING PAGE ==================== -->
+        <section id="view-landing" class="z-10 w-full max-w-4xl flex flex-col items-center justify-center text-center px-4 py-2">
+            <div class="relative mb-3 animate-float">
+                <div class="w-36 h-36 sm:w-48 sm:h-48 md:w-56 md:h-56 bg-emerald-400/30 rounded-full flex items-center justify-center border-4 border-emerald-300/50 shadow-2xl backdrop-blur-sm p-3 overflow-hidden">
+                    <img src="https://i.imgur.com/ZeytHIO.png" alt="Katak Pintar Froggy" class="w-full h-full object-contain drop-shadow-lg" onerror="this.onerror=null; this.src='https://placehold.co/200x200/22c55e/ffffff?text=🐸';">
+                </div>
+                <span class="absolute -bottom-2 right-0 sm:right-2 bg-amber-400 text-slate-900 font-black text-xs sm:text-sm px-3 py-1 rounded-full shadow border-2 border-white animate-bounce-subtle">SD KELAS 3</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] tracking-wide mb-1">
+                FROGGY MATH JUMP
+            </h1>
+            <p class="text-amber-300 font-semibold text-sm sm:text-lg mb-4 drop-shadow">
+                "Ayo Berhitung Sambil Melompat Bersama Katak Pintar!"
+            </p>
+
+            <!-- Mode Selection Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full mb-5">
+                <div onclick="selectGameMode('solo')" class="glass-panel hover:border-emerald-500 rounded-2xl p-4 cursor-pointer transform hover:-translate-y-1.5 transition duration-200 flex flex-col items-center group">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 text-2xl mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 class="font-extrabold text-slate-800 text-lg">MODE SOLO</h2>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold my-1">1 Pemain</span>
+                    <p class="text-xs text-slate-600">Petualangan mandiri melompat setinggi mungkin!</p>
+                </div>
+
+                <div onclick="selectGameMode('duel')" class="glass-panel hover:border-amber-500 rounded-2xl p-4 cursor-pointer transform hover:-translate-y-1.5 transition duration-200 flex flex-col items-center group">
+                    <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-2xl mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h2 class="font-extrabold text-slate-800 text-lg">MODE DUEL</h2>
+                    <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold my-1">2 Pemain (Split Screen)</span>
+                    <p class="text-xs text-slate-600">Adu cepat dan tepat berhitung 1 lawan 1!</p>
+                </div>
+
+                <div onclick="selectGameMode('squad')" class="glass-panel hover:border-sky-500 rounded-2xl p-4 cursor-pointer transform hover:-translate-y-1.5 transition duration-200 flex flex-col items-center group">
+                    <div class="w-14 h-14 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-600 text-2xl mb-2 group-hover:scale-110 transition">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2 class="font-extrabold text-slate-800 text-lg">MODE SQUAD</h2>
+                    <span class="text-xs bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-bold my-1">4 Pemain (Grid Arena)</span>
+                    <p class="text-xs text-slate-600">Kompetisi seru bersama 4 teman sekelas!</p>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <button onclick="openRulesModal()" class="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm sm:text-base border-b-4 border-sky-700 active:border-b-0 active:translate-y-1">
+                    <i class="fas fa-book-open"></i> Petunjuk Permainan
+                </button>
+                <button onclick="openSettingsModal()" class="px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm sm:text-base border-b-4 border-purple-700 active:border-b-0 active:translate-y-1">
+                    <i class="fas fa-sliders-h"></i> Pengaturan Soal
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== 2. GAME ARENA ==================== -->
+        <section id="view-game" class="hidden z-10 w-full h-full flex flex-col justify-between p-1 sm:p-2">
+            <div id="players-arena-grid" class="w-full h-full grid gap-2 sm:gap-3 transition-all duration-300">
+                <!-- Dynamic Player Cards Injected Here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== 3. MODAL PETUNJUK ==================== -->
+    <div id="modal-rules" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-5 sm:p-6 text-left relative max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3 mb-3 border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-sky-500"></i> Cara Bermain
+                </h3>
+                <button onclick="closeRulesModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+            </div>
+
+            <div class="overflow-y-auto space-y-3 text-sm text-slate-700 pr-1">
+                <div class="flex items-start gap-3 bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
+                    <span class="text-2xl">🍃</span>
+                    <div>
+                        <h4 class="font-bold text-emerald-900">1. Pilihan Daun Teratai Sejajar</h4>
+                        <p>Jawaban tertera langsung di atas daun teratai sejajar dalam 1 baris. Klik daun yang menurutmu benar!</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <span class="text-2xl">⭐</span>
+                    <div>
+                        <h4 class="font-bold text-amber-900">2. Skor & Combo</h4>
+                        <p>Jawaban benar memberikan <strong>+10 Poin</strong>. Menjawab benar 3x berturut-turut mengaktifkan bonus combo!</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 bg-rose-50 p-3 rounded-2xl border border-rose-200">
+                    <span class="text-2xl">💧</span>
+                    <div>
+                        <h4 class="font-bold text-rose-900">3. Hati-hati Jatuh ke Air</h4>
+                        <p>Jika salah memilih jawaban, katak akan tercebur ke kolam air dan nyawa berkurang.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeRulesModal()" class="mt-4 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow transition">
+                Saya Mengerti, Ayo Bermain!
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 4. MODAL PENGATURAN ==================== -->
+    <div id="modal-settings" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-5 sm:p-6 text-left relative max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3 mb-3 border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-cog text-purple-500"></i> Pengaturan Permainan
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+            </div>
+
+            <div class="overflow-y-auto space-y-4 text-sm text-slate-700 pr-1">
+                <div>
+                    <label class="font-bold text-slate-800 block mb-1">Materi Matematika:</label>
+                    <select id="setting-topic" class="w-full p-2.5 bg-slate-100 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="all">Semua Campuran (Perkalian & Pembagian)</option>
+                        <option value="mult_easy">Perkalian Dasar (1 - 5)</option>
+                        <option value="mult_hard">Perkalian Menengah (6 - 10)</option>
+                        <option value="div">Pembagian Tanpa Sisa</option>
+                        <option value="story">Soal Cerita Sederhana</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-800 block mb-1">Jumlah Soal:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="setQuestionCount(10)" id="btn-count-10" class="count-opt-btn py-2 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold rounded-xl text-center">10 Soal</button>
+                        <button type="button" onclick="setQuestionCount(20)" id="btn-count-20" class="count-opt-btn py-2 border-2 border-slate-200 bg-white text-slate-700 font-bold rounded-xl text-center">20 Soal</button>
+                        <button type="button" onclick="setQuestionCount(30)" id="btn-count-30" class="count-opt-btn py-2 border-2 border-slate-200 bg-white text-slate-700 font-bold rounded-xl text-center">30 Soal</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-800 block mb-1">Mode Nyawa:</label>
+                    <select id="setting-lives" class="w-full p-2.5 bg-slate-100 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="3">Tantangan (3 Nyawa ❤️)</option>
+                        <option value="relaxed">Santai (Tanpa Batas Nyawa ♾️)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-800 block mb-1">Batas Waktu per Soal:</label>
+                    <select id="setting-timer" class="w-full p-2.5 bg-slate-100 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="0">Tanpa Batas Waktu ⏳</option>
+                        <option value="15">15 Detik per Soal ⚡</option>
+                        <option value="30">30 Detik per Soal ⏱️</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="closeSettingsModal()" class="mt-4 w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow transition">
+                Simpan Pengaturan
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 5. MODAL HASIL AKHIR ==================== -->
+    <div id="modal-results" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-xl rounded-3xl p-6 text-center relative max-h-[90vh] flex flex-col shadow-2xl animate-float">
+            <div class="text-4xl mb-1">🏆</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mb-1">PERMAINAN SELESAI!</h2>
+            <p id="results-subtitle" class="text-sm text-slate-600 mb-4 font-semibold">Hasil Pencapaian Petualangan Matematika</p>
+
+            <div id="results-list" class="space-y-2 mb-6 max-h-60 overflow-y-auto pr-1">
+                <!-- Dynamic Results -->
+            </div>
+
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="restartCurrentGame()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 border-b-4 border-emerald-700 active:border-b-0">
+                    <i class="fas fa-redo"></i> Main Lagi
+                </button>
+                <button onclick="showLandingView()" class="px-5 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 border-b-4 border-slate-800 active:border-b-0">
+                    <i class="fas fa-home"></i> Menu Utama
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ENGINE ==================== -->
+    <script>
+        const APP_CONFIG = {
+            title: "FROGGY MATH JUMP",
+            author: "Andi Rifaih, S.Pd.",
+            grade: "SD Kelas 3",
+            questionCount: 10,
+            topic: "all",
+            livesMode: "3",
+            timerSec: 0,
+            soundEnabled: true
+        };
+
+        let currentMode = 'solo';
+        let playerStates = [];
+        let activeTimerIntervals = [];
+
+        /* Rain Drops Particle System */
+        const canvas = document.getElementById('rain-canvas');
+        const ctx = canvas.getContext('2d');
+        let raindrops = [];
+
+        function initRain() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            raindrops = [];
+            const dropCount = Math.floor(window.innerWidth / 12);
+            for (let i = 0; i < dropCount; i++) {
+                raindrops.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    length: Math.random() * 15 + 10,
+                    speed: Math.random() * 8 + 6,
+                    opacity: Math.random() * 0.35 + 0.15,
+                    rippleRadius: 0,
+                    rippleMax: Math.random() * 8 + 4
+                });
+            }
+        }
+
+        function drawRain() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            raindrops.forEach(drop => {
+                // Rain Drop Line
+                ctx.beginPath();
+                ctx.moveTo(drop.x, drop.y);
+                ctx.lineTo(drop.x - 1, drop.y + drop.length);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${drop.opacity})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Move drop down
+                drop.y += drop.speed;
+                drop.x -= 0.5;
+
+                // When rain drop hits near bottom half of screen, trigger ripple
+                if (drop.y > canvas.height - Math.random() * 200) {
+                    if (drop.rippleRadius < drop.rippleMax) {
+                        ctx.beginPath();
+                        ctx.ellipse(drop.x, drop.y + drop.length, drop.rippleRadius * 1.5, drop.rippleRadius * 0.6, 0, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${drop.opacity * (1 - drop.rippleRadius / drop.rippleMax)})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        drop.rippleRadius += 0.8;
+                    } else {
+                        drop.y = -drop.length;
+                        drop.x = Math.random() * canvas.width;
+                        drop.rippleRadius = 0;
+                    }
+                }
+            });
+            requestAnimationFrame(drawRain);
+        }
+
+        window.addEventListener('resize', initRain);
+        initRain();
+        drawRain();
+
+        const QUESTION_BANK = [
+            // Perkalian Dasar (1-5)
+            { topic: 'mult_easy', q: "2 × 3 = ...?", a: 6, options: [5, 6, 7, 8] },
+            { topic: 'mult_easy', q: "4 × 4 = ...?", a: 16, options: [12, 14, 16, 18] },
+            { topic: 'mult_easy', q: "5 × 3 = ...?", a: 15, options: [10, 15, 20, 25] },
+            { topic: 'mult_easy', q: "3 × 4 = ...?", a: 12, options: [10, 12, 14, 16] },
+            { topic: 'mult_easy', q: "5 × 5 = ...?", a: 25, options: [20, 22, 25, 30] },
+            { topic: 'mult_easy', q: "2 × 8 = ...?", a: 16, options: [14, 16, 18, 20] },
+            { topic: 'mult_easy', q: "4 × 5 = ...?", a: 20, options: [15, 18, 20, 24] },
+            { topic: 'mult_easy', q: "3 × 7 = ...?", a: 21, options: [18, 21, 24, 27] },
+            { topic: 'mult_easy', q: "5 × 6 = ...?", a: 30, options: [25, 28, 30, 35] },
+
+            // Perkalian Menengah (6-10)
+            { topic: 'mult_hard', q: "6 × 7 = ...?", a: 42, options: [36, 40, 42, 48] },
+            { topic: 'mult_hard', q: "8 × 5 = ...?", a: 40, options: [35, 40, 45, 50] },
+            { topic: 'mult_hard', q: "7 × 7 = ...?", a: 49, options: [42, 48, 49, 56] },
+            { topic: 'mult_hard', q: "9 × 4 = ...?", a: 36, options: [32, 36, 40, 42] },
+            { topic: 'mult_hard', q: "6 × 8 = ...?", a: 48, options: [42, 46, 48, 54] },
+            { topic: 'mult_hard', q: "8 × 8 = ...?", a: 64, options: [56, 60, 64, 72] },
+            { topic: 'mult_hard', q: "9 × 6 = ...?", a: 54, options: [48, 52, 54, 63] },
+
+            // Pembagian
+            { topic: 'div', q: "12 ÷ 3 = ...?", a: 4, options: [3, 4, 5, 6] },
+            { topic: 'div', q: "20 ÷ 4 = ...?", a: 5, options: [4, 5, 6, 8] },
+            { topic: 'div', q: "24 ÷ 6 = ...?", a: 4, options: [3, 4, 6, 8] },
+            { topic: 'div', q: "36 ÷ 6 = ...?", a: 6, options: [5, 6, 7, 8] },
+            { topic: 'div', q: "45 ÷ 5 = ...?", a: 9, options: [7, 8, 9, 10] },
+            { topic: 'div', q: "18 ÷ 2 = ...?", a: 9, options: [8, 9, 10, 12] },
+
+            // Soal Cerita
+            { topic: 'story', q: "Ibu memiliki 4 piring. Setiap piring berisi 3 kue. Berapa jumlah seluruh kue?", a: 12, options: [7, 10, 12, 14] },
+            { topic: 'story', q: "Ada 24 pensil dibagikan sama rata kepada 6 siswa. Berapa pensil per siswa?", a: 4, options: [3, 4, 5, 6] },
+            { topic: 'story', q: "Budi membeli 5 bungkus permen. Setiap bungkus berisi 6 permen. Total permen Budi?", a: 30, options: [25, 28, 30, 35] }
+        ];
+
+        /* Sound Generator */
+        class SoundFX {
+            constructor() { this.ctx = null; }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) this.ctx = new AudioContext();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            }
+            playJump() {
+                if (!APP_CONFIG.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const now = this.ctx.currentTime;
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.exponentialRampToValueAtTime(520, now + 0.18);
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.18);
+            }
+            playCorrect() {
+                if (!APP_CONFIG.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Melodi Ceria / Chime Menarik Saat Benar (C5 -> E5 -> G5 -> C6)
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+                    gain.gain.setValueAtTime(0.3, now + idx * 0.07);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.07);
+                    osc.stop(now + idx * 0.07 + 0.25);
+                });
+            }
+            playWrong() {
+                if (!APP_CONFIG.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Suara Gagal/Salah (Nada Menurun)
+                const notes = [300, 240, 180];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    gain.gain.setValueAtTime(0.3, now + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.18);
+                });
+            }
+            playSplash() {
+                if (!APP_CONFIG.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 0.4;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(900, this.ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.4);
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            }
+        }
+
+        const audioManager = new SoundFX();
+
+        function generateQuestionDeck(topic, count) {
+            let pool = topic === 'all' ? [...QUESTION_BANK] : QUESTION_BANK.filter(item => item.topic === topic);
+            if (pool.length === 0) pool = [...QUESTION_BANK];
+
+            let shuffled = [...pool];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            let deck = [];
+            while (deck.length < count) deck.push(...shuffled);
+            deck = deck.slice(0, count);
+
+            return deck.map(item => {
+                let options = [...item.options];
+                for (let i = options.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [options[i], options[j]] = [options[j], options[i]];
+                }
+                return { q: item.q, a: item.a, options: options };
+            });
+        }
+
+        function selectGameMode(mode) {
+            currentMode = mode;
+            audioManager.init();
+
+            let playerCount = mode === 'solo' ? 1 : mode === 'duel' ? 2 : 4;
+            clearAllTimers();
+            playerStates = [];
+
+            const gridContainer = document.getElementById('players-arena-grid');
+            gridContainer.innerHTML = '';
+
+            if (mode === 'solo') {
+                gridContainer.className = 'w-full h-full grid grid-cols-1 max-w-3xl mx-auto';
+            } else if (mode === 'duel') {
+                gridContainer.className = 'w-full h-full grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3';
+            } else {
+                // Mode Squad: Layar terbagi menjadi 4 kolom berbaris sejajar ke samping (4 ke samping)
+                gridContainer.className = 'w-full h-full grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2';
+            }
+
+            const colors = [
+                { border: 'border-emerald-500', bg: 'bg-emerald-500', name: 'Player 1' },
+                { border: 'border-amber-500', bg: 'bg-amber-500', name: 'Player 2' },
+                { border: 'border-sky-500', bg: 'bg-sky-500', name: 'Player 3' },
+                { border: 'border-purple-500', bg: 'bg-purple-500', name: 'Player 4' }
+            ];
+
+            for (let i = 0; i < playerCount; i++) {
+                const pState = {
+                    id: i,
+                    name: colors[i].name,
+                    score: 0,
+                    correctCount: 0,
+                    wrongCount: 0,
+                    combo: 0,
+                    lives: APP_CONFIG.livesMode === 'relaxed' ? 999 : 3,
+                    currentIndex: 0,
+                    deck: generateQuestionDeck(APP_CONFIG.topic, APP_CONFIG.questionCount),
+                    isFinished: false,
+                    isLocked: false,
+                    timeLeft: APP_CONFIG.timerSec,
+                    color: colors[i]
+                };
+                playerStates.push(pState);
+                gridContainer.insertAdjacentHTML('beforeend', createPlayerCardHTML(pState, playerCount));
+            }
+
+            document.getElementById('view-landing').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('hidden');
+            document.getElementById('btn-home').classList.remove('hidden');
+
+            playerStates.forEach(p => {
+                renderPlayerQuestion(p.id);
+                if (APP_CONFIG.timerSec > 0) startPlayerTimer(p.id);
+            });
+        }
+
+        /* SVG Leaf Pad Button Generator (Horizontal-friendly) */
+        function createLeafSVG(val, index) {
+            return `
+                <div class="leaf-btn w-full h-16 sm:h-20 relative flex items-center justify-center cursor-pointer select-none">
+                    <svg class="absolute inset-0 w-full h-full drop-shadow-md" viewBox="0 0 160 100" preserveAspectRatio="none">
+                        <!-- Lily Leaf Base -->
+                        <path d="M 80 8 
+                                 C 135 8, 156 32, 156 58 
+                                 C 156 84, 128 95, 80 95 
+                                 C 32 95, 4 84, 4 58 
+                                 C 4 32, 25 8, 80 8 Z" 
+                              fill="#16a34a" stroke="#15803d" stroke-width="4"/>
+                        <!-- Leaf Vane Details -->
+                        <path d="M 80 95 Q 80 50 80 18" stroke="#22c55e" stroke-width="3" fill="none"/>
+                        <path d="M 80 58 Q 120 42 142 38" stroke="#22c55e" stroke-width="2" fill="none"/>
+                        <path d="M 80 58 Q 40 42 18 38" stroke="#22c55e" stroke-width="2" fill="none"/>
+                        <path d="M 80 75 Q 115 68 135 65" stroke="#22c55e" stroke-width="2" fill="none"/>
+                        <path d="M 80 75 Q 45 68 25 65" stroke="#22c55e" stroke-width="2" fill="none"/>
+                        <!-- Cutout notch in leaf -->
+                        <path d="M 75 95 L 85 95 L 80 82 Z" fill="#0284c7"/>
+                    </svg>
+                    <!-- Text Overlay -->
+                    <div class="relative z-10 flex flex-col items-center justify-center text-white drop-shadow-md px-1">
+                        <span class="text-[9px] sm:text-[11px] font-extrabold text-emerald-200 bg-emerald-950/50 px-2 py-0.5 rounded-full mb-0.5 border border-emerald-400/40">Daun ${String.fromCharCode(65 + index)}</span>
+                        <span class="text-base sm:text-2xl font-black tracking-wide text-amber-200">${val}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createPlayerCardHTML(p, totalPlayers) {
+            return `
+                <div id="player-card-${p.id}" class="glass-panel rounded-2xl flex flex-col justify-between p-2 sm:p-3 relative border-3 sm:border-4 ${p.color.border} shadow-lg overflow-hidden transition-all duration-300">
+                    
+                    <!-- Header Bar -->
+                    <div class="flex items-center justify-between border-b border-slate-200/60 pb-1 mb-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full ${p.color.bg} inline-block animate-pulse"></span>
+                            <input type="text" value="${p.name}" onchange="updatePlayerName(${p.id}, this.value)" 
+                                class="font-bold text-slate-800 text-xs sm:text-sm bg-transparent hover:bg-white/50 focus:bg-white rounded px-1 py-0.5 outline-none w-24 sm:w-32 transition">
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 text-xs font-bold">
+                            <div class="flex items-center gap-1 text-rose-500">
+                                <i class="fas fa-heart"></i>
+                                <span id="p${p.id}-lives">${APP_CONFIG.livesMode === 'relaxed' ? '♾️' : p.lives}</span>
+                            </div>
+                            <div class="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full">
+                                🏆 <span id="p${p.id}-score">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-200 rounded-full h-1.5 mb-1 relative overflow-hidden">
+                        <div id="p${p.id}-progress" class="${p.color.bg} h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    
+                    ${APP_CONFIG.timerSec > 0 ? `
+                        <div class="text-right text-[10px] font-bold text-slate-600 mb-0.5">
+                            ⏱️ Waktu: <span id="p${p.id}-timer" class="text-rose-600 font-extrabold">${APP_CONFIG.timerSec}</span>s
+                        </div>
+                    ` : ''}
+
+                    <!-- POND & CONTENT CONTAINER -->
+                    <div id="p${p.id}-pond" class="relative flex-1 min-h-[160px] sm:min-h-[180px] bg-sky-200/50 rounded-xl border border-sky-300/60 p-1.5 flex flex-col items-center justify-between overflow-hidden">
+                        
+                        <!-- 1. SOAL BOX -->
+                        <div id="p${p.id}-q-box" class="z-10 bg-white/95 backdrop-blur-md rounded-xl p-1.5 text-center border-2 border-sky-400 shadow-md w-full max-w-lg">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-sky-600 uppercase tracking-wider block">Soal <span id="p${p.id}-q-num">1</span> dari ${APP_CONFIG.questionCount}</span>
+                            <p id="p${p.id}-q-text" class="text-xs sm:text-base font-extrabold text-slate-800 leading-tight">...</p>
+                        </div>
+
+                        <!-- 2. PILIHAN JAWABAN DAUN TERATAI DALAM 1 BARIS SEJAJAR -->
+                        <div id="p${p.id}-options" class="w-full grid grid-cols-4 gap-1 sm:gap-1.5 my-1 z-10 max-w-xl">
+                            <!-- Injected 4 SVG Leaves Side by Side -->
+                        </div>
+
+                        <!-- 3. KATAK DI BAWAH MENUNGGU LOMPAT -->
+                        <div class="relative w-full flex justify-center items-end mt-0.5 min-h-[65px] sm:min-h-[80px]">
+
+                            <!-- Rerumputan Kartun Sisi Kiri -->
+                            <div class="absolute bottom-0 left-1 sm:left-4 z-10 pointer-events-none opacity-90 scale-75 sm:scale-90 origin-bottom">
+                                <svg class="w-12 h-12 sm:w-16 sm:h-16 grass-sway" viewBox="0 0 100 100" fill="none">
+                                    <path d="M15 100 Q 5 60 0 20 Q 20 50 25 100" fill="#15803d"/>
+                                    <path d="M22 100 Q 15 40 10 10 Q 35 45 35 100" fill="#22c55e"/>
+                                    <path d="M30 100 Q 40 50 48 25 Q 45 60 40 100" fill="#16a34a"/>
+                                    <path d="M40 100 Q 60 45 70 15 Q 55 60 50 100" fill="#4ade80"/>
+                                    <path d="M 55 100 L 55 30" stroke="#15803d" stroke-width="3"/>
+                                    <rect x="52" y="25" width="6" height="25" rx="3" fill="#78350f"/>
+                                </svg>
+                            </div>
+
+                            <!-- Katak & Daun Pijakan Utama (Home Base) -->
+                            <div id="p${p.id}-frog" class="frog-jumping z-20 flex flex-col items-center cursor-pointer transition-transform duration-500 relative">
+                                
+                                <!-- Tubuh Katak -->
+                                <svg class="w-9 h-9 sm:w-12 sm:h-12 drop-shadow-lg relative z-20 -mb-1.5" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="55" r="35" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+                                    <circle cx="32" cy="28" r="14" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+                                    <circle cx="68" cy="28" r="14" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+                                    <circle cx="32" cy="26" r="8" fill="#ffffff"/>
+                                    <circle cx="68" cy="26" r="8" fill="#ffffff"/>
+                                    <circle cx="34" cy="26" r="4" fill="#0f172a"/>
+                                    <circle cx="66" cy="26" r="4" fill="#0f172a"/>
+                                    <ellipse cx="28" cy="62" rx="5" ry="3" fill="#f43f5e" opacity="0.6"/>
+                                    <ellipse cx="72" cy="62" rx="5" ry="3" fill="#f43f5e" opacity="0.6"/>
+                                    <path id="p${p.id}-frog-mouth" d="M 38 64 Q 50 74 62 64" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+                                </svg>
+                                
+                                <!-- Daun Teratai Pijakan Utama Katak (Home Base Pad) -->
+                                <div class="relative z-10 w-16 sm:w-22 h-5 sm:h-6 flex items-center justify-center">
+                                    <svg class="w-full h-full drop-shadow-md" viewBox="0 0 140 45">
+                                        <ellipse cx="70" cy="22" rx="65" ry="18" fill="#16a34a" stroke="#15803d" stroke-width="3"/>
+                                        <ellipse cx="70" cy="20" rx="55" ry="13" fill="#22c55e" opacity="0.8"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Rerumputan Kartun Sisi Kanan -->
+                            <div class="absolute bottom-0 right-1 sm:right-4 z-10 pointer-events-none opacity-90 scale-75 sm:scale-90 origin-bottom">
+                                <svg class="w-12 h-12 sm:w-16 sm:h-16 grass-sway" style="animation-delay: 1.5s;" viewBox="0 0 100 100" fill="none">
+                                    <path d="M85 100 Q 95 60 100 20 Q 80 50 75 100" fill="#15803d"/>
+                                    <path d="M78 100 Q 85 40 90 10 Q 65 45 65 100" fill="#22c55e"/>
+                                    <path d="M70 100 Q 60 50 52 25 Q 55 60 60 100" fill="#16a34a"/>
+                                    <path d="M60 100 Q 40 45 30 15 Q 45 60 50 100" fill="#4ade80"/>
+                                </svg>
+                            </div>
+
+                        </div>
+
+                        <!-- Water Splash Overlay -->
+                        <div id="p${p.id}-splash" class="absolute inset-0 pointer-events-none flex items-center justify-center hidden z-30">
+                            <div class="text-3xl sm:text-4xl animate-ping">💦</div>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Banner -->
+                    <div id="p${p.id}-feedback" class="absolute inset-x-0 bottom-1.5 mx-auto w-11/12 text-center py-1 px-2 rounded-xl font-black text-[10px] sm:text-xs hidden z-40 shadow-xl transition-all duration-200">
+                        ...
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPlayerQuestion(pid) {
+            const p = playerStates[pid];
+            if (!p || p.isFinished) return;
+
+            const qNumElem = document.getElementById(`p${pid}-q-num`);
+            const qTextElem = document.getElementById(`p${pid}-q-text`);
+            const optionsElem = document.getElementById(`p${pid}-options`);
+            const progressElem = document.getElementById(`p${pid}-progress`);
+
+            if (p.currentIndex >= p.deck.length) {
+                finishPlayerGame(pid);
+                return;
+            }
+
+            const currentQ = p.deck[p.currentIndex];
+            qNumElem.innerText = p.currentIndex + 1;
+            qTextElem.innerText = currentQ.q;
+
+            const pct = ((p.currentIndex) / p.deck.length) * 100;
+            progressElem.style.width = `${pct}%`;
+
+            const frog = document.getElementById(`p${pid}-frog`);
+            frog.className = "frog-jumping z-20 flex flex-col items-center transition-transform duration-500";
+            frog.style.transform = "translate(0, 0) scale(1)";
+            
+            const mouth = document.getElementById(`p${pid}-frog-mouth`);
+            if (mouth) mouth.setAttribute('d', 'M 38 64 Q 50 74 62 64');
+
+            // Render 4 Answer Leaves in 1 Horizontal Line
+            optionsElem.innerHTML = '';
+            currentQ.options.forEach((optVal, idx) => {
+                const leafWrapper = document.createElement('div');
+                leafWrapper.innerHTML = createLeafSVG(optVal, idx);
+                const leafBtn = leafWrapper.firstElementChild;
+                leafBtn.onclick = () => handleAnswer(pid, optVal, leafBtn);
+                optionsElem.appendChild(leafBtn);
+            });
+
+            p.isLocked = false;
+        }
+
+        function handleAnswer(pid, selectedVal, leafBtnElem) {
+            const p = playerStates[pid];
+            if (!p || p.isLocked || p.isFinished) return;
+
+            p.isLocked = true;
+            const currentQ = p.deck[p.currentIndex];
+            const isCorrect = selectedVal === currentQ.a;
+
+            const frog = document.getElementById(`p${pid}-frog`);
+            const mouth = document.getElementById(`p${pid}-frog-mouth`);
+
+            // Disable all leaf clicks
+            const leafBtns = document.querySelectorAll(`#p${pid}-options .leaf-btn`);
+            leafBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            const leafPath = leafBtnElem.querySelector('path');
+
+            // Hitung posisi relatif katak untuk melompat tepat ke lokasi daun yang di-klik
+            const frogRect = frog.getBoundingClientRect();
+            const leafRect = leafBtnElem.getBoundingClientRect();
+
+            const targetX = (leafRect.left + leafRect.width / 2) - (frogRect.left + frogRect.width / 2);
+            const targetY = (leafRect.top + leafRect.height / 2) - (frogRect.top + frogRect.height / 2);
+
+            audioManager.playJump();
+
+            if (isCorrect) {
+                setTimeout(() => audioManager.playCorrect(), 180);
+
+                p.score += 10;
+                p.correctCount++;
+                p.combo++;
+
+                if (p.combo >= 3) {
+                    p.score += 5;
+                    showFeedback(pid, `🔥 HEBAT! COMBO 3x (+15 Poin)`, 'bg-amber-400 text-amber-950');
+                } else {
+                    showFeedback(pid, `✨ BENAR! (+10 Poin)`, 'bg-emerald-500 text-white');
+                }
+
+                if (mouth) mouth.setAttribute('d', 'M 35 60 Q 50 80 65 60');
+                
+                // Katak melompat ke posisi koordinat target X dan Y dari daun
+                frog.style.transform = `translate(${targetX}px, ${targetY}px) scale(1.1)`;
+                if (leafPath) leafPath.setAttribute('fill', '#22c55e');
+
+                setTimeout(() => {
+                    frog.style.transform = "translate(0, 0) scale(1)";
+                }, 450);
+
+            } else {
+                setTimeout(() => {
+                    audioManager.playWrong();
+                    audioManager.playSplash();
+                }, 200);
+
+                p.wrongCount++;
+                p.combo = 0;
+                if (APP_CONFIG.livesMode !== 'relaxed') p.lives--;
+
+                showFeedback(pid, `❌ UPS! Jawaban Benar: ${currentQ.a}`, 'bg-rose-500 text-white');
+
+                if (mouth) mouth.setAttribute('d', 'M 35 70 Q 50 55 65 70');
+
+                // Katak melompat ke daun lalu tercebur (splash)
+                frog.style.transform = `translate(${targetX}px, ${targetY}px) scale(1.05)`;
+                if (leafPath) leafPath.setAttribute('fill', '#ef4444');
+
+                setTimeout(() => {
+                    frog.classList.add('frog-splash');
+                    const splashElem = document.getElementById(`p${pid}-splash`);
+                    if (splashElem) {
+                        splashElem.classList.remove('hidden');
+                        setTimeout(() => splashElem.classList.add('hidden'), 600);
+                    }
+                }, 250);
+            }
+
+            document.getElementById(`p${pid}-score`).innerText = p.score;
+            document.getElementById(`p${pid}-lives`).innerText = APP_CONFIG.livesMode === 'relaxed' ? '♾️' : p.lives;
+
+            setTimeout(() => {
+                hideFeedback(pid);
+                if (APP_CONFIG.livesMode !== 'relaxed' && p.lives <= 0) {
+                    finishPlayerGame(pid);
+                } else {
+                    p.currentIndex++;
+                    if (p.currentIndex >= p.deck.length) {
+                        finishPlayerGame(pid);
+                    } else {
+                        renderPlayerQuestion(pid);
+                        if (APP_CONFIG.timerSec > 0) p.timeLeft = APP_CONFIG.timerSec;
+                    }
+                }
+            }, 1200);
+        }
+
+        function startPlayerTimer(pid) {
+            const timerElem = document.getElementById(`p${pid}-timer`);
+            if (!timerElem) return;
+
+            const timerId = setInterval(() => {
+                const p = playerStates[pid];
+                if (!p || p.isFinished) {
+                    clearInterval(timerId);
+                    return;
+                }
+
+                if (p.timeLeft > 0) {
+                    p.timeLeft--;
+                    timerElem.innerText = p.timeLeft;
+                } else {
+                    p.timeLeft = APP_CONFIG.timerSec;
+                    if (!p.isLocked) {
+                        const leafBtns = document.querySelectorAll(`#p${pid}-options .leaf-btn`);
+                        if (leafBtns.length > 0) leafBtns[0].click();
+                    }
+                }
+            }, 1000);
+
+            activeTimerIntervals.push(timerId);
+        }
+
+        function clearAllTimers() {
+            activeTimerIntervals.forEach(id => clearInterval(id));
+            activeTimerIntervals = [];
+        }
+
+        function showFeedback(pid, text, bgClass) {
+            const feedbackElem = document.getElementById(`p${pid}-feedback`);
+            if (feedbackElem) {
+                feedbackElem.className = `absolute inset-x-0 bottom-2 mx-auto w-11/12 text-center py-2 px-3 rounded-xl font-black text-xs sm:text-sm z-40 shadow-xl transition-all duration-200 ${bgClass}`;
+                feedbackElem.innerText = text;
+                feedbackElem.classList.remove('hidden');
+            }
+        }
+
+        function hideFeedback(pid) {
+            const feedbackElem = document.getElementById(`p${pid}-feedback`);
+            if (feedbackElem) feedbackElem.classList.add('hidden');
+        }
+
+        function updatePlayerName(pid, newName) {
+            if (playerStates[pid]) playerStates[pid].name = newName.trim() || `Player ${pid + 1}`;
+        }
+
+        function finishPlayerGame(pid) {
+            const p = playerStates[pid];
+            if (!p || p.isFinished) return;
+            p.isFinished = true;
+
+            const qBox = document.getElementById(`p${pid}-q-box`);
+            const optBox = document.getElementById(`p${pid}-options`);
+            if (qBox) qBox.innerHTML = `<span class="text-emerald-600 font-extrabold text-base sm:text-lg">🎉 Selesai!</span>`;
+            if (optBox) optBox.innerHTML = `<div class="col-span-4 text-center text-xs font-bold text-slate-500 py-3">Menunggu pemain lain...</div>`;
+
+            if (playerStates.every(player => player.isFinished)) {
+                setTimeout(showFinalResultsModal, 800);
+            }
+        }
+
+        function showFinalResultsModal() {
+            clearAllTimers();
+            const sorted = [...playerStates].sort((a, b) => b.score - a.score);
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = '';
+
+            const subTitle = document.getElementById('results-subtitle');
+            if (currentMode === 'solo') {
+                subTitle.innerText = `Kerja Bagus, ${sorted[0].name}! Petualanganmu Sangat Hebat!`;
+            } else if (currentMode === 'duel') {
+                subTitle.innerText = sorted[0].score === sorted[1].score ? 'Hasil Seri! Kalian Sama Pintarnya!' : `🏆 Pemenang: ${sorted[0].name}!`;
+            } else {
+                subTitle.innerText = `Papan Peringkat Juara Katak Pintar`;
+            }
+
+            sorted.forEach((p, rank) => {
+                const medal = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : '🎖️';
+                const row = document.createElement('div');
+                row.className = `flex items-center justify-between p-3 rounded-2xl ${rank === 0 ? 'bg-amber-100 border-2 border-amber-400 font-extrabold' : 'bg-slate-100 border border-slate-200 font-bold'} text-slate-800 text-sm sm:text-base`;
+                row.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl sm:text-2xl">${medal}</span>
+                        <div class="text-left">
+                            <div>${p.name}</div>
+                            <div class="text-[10px] sm:text-xs text-slate-500 font-medium">Benar: ${p.correctCount} &bull; Salah: ${p.wrongCount}</div>
+                        </div>
+                    </div>
+                    <div class="text-amber-700 font-black text-lg sm:text-xl">
+                        ${p.score} <span class="text-xs font-normal">Poin</span>
+                    </div>
+                `;
+                resultsList.appendChild(row);
+            });
+
+            document.getElementById('modal-results').classList.remove('hidden');
+        }
+
+        function restartCurrentGame() {
+            document.getElementById('modal-results').classList.add('hidden');
+            selectGameMode(currentMode);
+        }
+
+        function showLandingView() {
+            clearAllTimers();
+            document.getElementById('modal-results').classList.add('hidden');
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-landing').classList.remove('hidden');
+            document.getElementById('btn-home').classList.add('hidden');
+        }
+
+        function openRulesModal() { document.getElementById('modal-rules').classList.remove('hidden'); }
+        function closeRulesModal() { document.getElementById('modal-rules').classList.add('hidden'); }
+        function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
+        function closeSettingsModal() {
+            APP_CONFIG.topic = document.getElementById('setting-topic').value;
+            APP_CONFIG.livesMode = document.getElementById('setting-lives').value;
+            APP_CONFIG.timerSec = parseInt(document.getElementById('setting-timer').value, 10);
+            document.getElementById('modal-settings').classList.add('hidden');
+        }
+
+        function setQuestionCount(count) {
+            APP_CONFIG.questionCount = count;
+            document.querySelectorAll('.count-opt-btn').forEach(btn => {
+                btn.className = 'count-opt-btn py-2 border-2 border-slate-200 bg-white text-slate-700 font-bold rounded-xl text-center';
+            });
+            const activeBtn = document.getElementById(`btn-count-${count}`);
+            if (activeBtn) {
+                activeBtn.className = 'count-opt-btn py-2 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold rounded-xl text-center';
+            }
+        }
+
+        document.getElementById('btn-toggle-sound').addEventListener('click', () => {
+            APP_CONFIG.soundEnabled = !APP_CONFIG.soundEnabled;
+            const icon = document.getElementById('icon-sound');
+            icon.className = APP_CONFIG.soundEnabled ? 'fas fa-volume-up text-amber-300 text-lg' : 'fas fa-volume-mute text-rose-300 text-lg';
+        });
+
+        document.getElementById('btn-toggle-fullscreen').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.warn(err.message));
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            const icon = document.getElementById('icon-fullscreen');
+            icon.className = document.fullscreenElement ? 'fas fa-compress text-amber-300 text-lg' : 'fas fa-expand text-amber-300 text-lg';
+        });
+
+        document.getElementById('btn-home').addEventListener('click', showLandingView);
+    </script>
+</body>
+</html>
